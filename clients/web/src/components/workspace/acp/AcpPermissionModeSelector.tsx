@@ -47,7 +47,11 @@ export function AcpPermissionModeSelector({ podKey }: { podKey: string }) {
         <span className="text-muted-foreground">{label(currentKey)}</span>
         <ChevronDown className="h-3 w-3 text-muted-foreground" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent side="top" align="start" className="w-48">
+      <DropdownMenuContent
+        side="top"
+        align="start"
+        className="max-h-[var(--radix-dropdown-menu-content-available-height)] w-48 overflow-auto overflow-x-hidden"
+      >
         {modeValues.map((value) => (
           <DropdownMenuItem
             key={value}

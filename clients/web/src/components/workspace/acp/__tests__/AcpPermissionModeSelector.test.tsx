@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import userEvent from "@testing-library/user-event";
 import { render, screen } from "@/test/test-utils";
 import { AcpPermissionModeSelector } from "@/components/workspace/acp/AcpPermissionModeSelector";
 import {
@@ -21,10 +22,8 @@ function seed(podKey: string, permissionMode: string, supportedPermissionModes: 
   });
 }
 
-// The trigger label is t(`${currentKey}.label`) where currentKey falls back to
-// "unknown" when the active mode isn't in the rendered set — so the label alone
-// proves which set (advertised vs Claude fallback) is in effect, no dropdown
-// expansion (and no jsdom Radix pointer plumbing) required.
+// The trigger label proves which set (advertised vs Claude fallback) is in
+// effect for these cases, without opening the Radix menu.
 describe("AcpPermissionModeSelector", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -48,5 +47,21 @@ describe("AcpPermissionModeSelector", () => {
     seed("pod-1", "ask_dangerous", []);
     render(<AcpPermissionModeSelector podKey="pod-1" />);
     expect(screen.getByText("—")).toBeInTheDocument();
+  });
+
+  it("keeps the permission menu scrollable within the available viewport height", async () => {
+    const modes = Array.from({ length: 12 }, (_, index) => `custom-mode-${index}`);
+    seed("pod-1", modes[0], modes);
+    const user = userEvent.setup();
+    render(<AcpPermissionModeSelector podKey="pod-1" />);
+
+    await user.click(screen.getByRole("button"));
+
+    const menu = await screen.findByRole("menu");
+    expect(menu).toHaveClass("max-h-[var(--radix-dropdown-menu-content-available-height)]");
+    expect(menu).toHaveClass("overflow-auto");
+    expect(menu).toHaveClass("overflow-x-hidden");
+    expect(menu).not.toHaveClass("overflow-hidden");
+    expect(screen.getAllByRole("menuitem")).toHaveLength(modes.length);
   });
 });
